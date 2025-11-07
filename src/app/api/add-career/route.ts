@@ -3,9 +3,19 @@ import connectMongoDB from "@/lib/mongoDB/mongoDB";
 import { guid } from "@/lib/Utils";
 import { ObjectId } from "mongodb";
 
+// Import Sanization Helper Functions
+import {
+  sanitizeString,
+  sanitizeRichText,
+  validateAndSanitizeQuestions,
+  isValidObjectId,
+} from "@/lib/utils/helpersV2";
+
 export async function POST(request: Request) {
   try {
-    const {
+    const body = await request.json();
+
+    let {
       jobTitle,
       description,
       questions,
@@ -24,7 +34,8 @@ export async function POST(request: Request) {
       country,
       province,
       employmentType,
-    } = await request.json();
+    } = body;
+
     // Validate required fields
     if (!jobTitle || !description || !questions || !location || !workSetup) {
       return NextResponse.json(
@@ -36,48 +47,94 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate ObjectId
+    if (!isValidObjectId(orgID)) {
+      return NextResponse.json(
+        { error: "Invalid organization id." },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize and validate fields
+    jobTitle = sanitizeString(jobTitle);
+    description = sanitizeRichText(description);
+    questions = validateAndSanitizeQuestions(questions);
+    location = sanitizeString(location);
+    workSetup = sanitizeString(workSetup);
+    workSetupRemarks = sanitizeString(workSetupRemarks || "");
+    country = sanitizeString(country || "");
+    province = sanitizeString(province || "");
+    employmentType = sanitizeString(employmentType || "");
+    lastEditedBy = sanitizeString(lastEditedBy || "");
+    createdBy = sanitizeString(createdBy || "");
+
+    // Validate minimum and maximum salary
+    if (minimumSalary && maximumSalary && minimumSalary > maximumSalary) {
+      return NextResponse.json(
+        { error: "Minimum salary cannot be greater than maximum salary." },
+        { status: 400 }
+      );
+    }
+
+    // Connect to DB
     const { db } = await connectMongoDB();
 
-    const orgDetails = await db.collection("organizations").aggregate([
-      {
-        $match: {
-          _id: new ObjectId(orgID)
-        }
-      },
-      {
-        $lookup: {
+    // Validate organization and plan
+    const orgDetails = await db
+      .collection("organizations")
+      .aggregate([
+        {
+          $match: {
+            _id: new ObjectId(orgID),
+          },
+        },
+        {
+          $lookup: {
             from: "organization-plans",
             let: { planId: "$planId" },
             pipeline: [
-                {
-                    $addFields: {
-                        _id: { $toString: "$_id" }
-                    }
+              {
+                $addFields: {
+                  _id: { $toString: "$_id" },
                 },
-                {
-                    $match: {
-                        $expr: { $eq: ["$_id", "$$planId"] }
-                    }
-                }
+              },
+              {
+                $match: {
+                  $expr: { $eq: ["$_id", "$$planId"] },
+                },
+              },
             ],
-            as: "plan"
-        }
-      },
-      {
-        $unwind: "$plan"
-      },
-    ]).toArray();
+            as: "plan",
+          },
+        },
+        {
+          $unwind: "$plan",
+        },
+      ])
+      .toArray();
 
     if (!orgDetails || orgDetails.length === 0) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 }
+      );
     }
 
-    const totalActiveCareers = await db.collection("careers").countDocuments({ orgID, status: "active" });
+    const totalActiveCareers = await db
+      .collection("careers")
+      .countDocuments({ orgID, status: "active" });
 
-    if (totalActiveCareers >= (orgDetails[0].plan.jobLimit + (orgDetails[0].extraJobSlots || 0))) {
-      return NextResponse.json({ error: "You have reached the maximum number of jobs for your plan" }, { status: 400 });
+    if (
+      totalActiveCareers >=
+      orgDetails[0].plan.jobLimit + (orgDetails[0].extraJobSlots || 0)
+    ) {
+      return NextResponse.json(
+        { error: "You have reached the maximum number of jobs for your plan" },
+        { status: 400 }
+      );
     }
 
+    // Create career document
     const career = {
       id: guid(),
       jobTitle,

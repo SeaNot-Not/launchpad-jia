@@ -1,4 +1,6 @@
 import moment from "moment";
+import DOMPurify from "isomorphic-dompurify";
+import validator from "validator";
 
 export function checkFile(file) {
   if (file.length > 1) {
@@ -58,4 +60,66 @@ export function processDate(date) {
 
 export function processDisplayDate(date) {
   return moment(date).format("MMM D, YYYY");
+}
+
+/**
+ * Sanitization & Validation Helpers
+ */
+
+// Sanitize plain text (escapes HTML special characters).
+export function sanitizeString(value: string): string {
+  if (typeof value !== "string") return "";
+  return validator.escape(value.trim());
+}
+
+// Sanitize rich text (like descriptions) but allow safe HTML tags.
+export function sanitizeRichText(html: string): string {
+  if (typeof html !== "string") return "";
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      "b",
+      "i",
+      "em",
+      "strong",
+      "p",
+      "ul",
+      "ol",
+      "li",
+      "br",
+      "span",
+      "div",
+    ],
+    ALLOWED_ATTR: ["style"],
+  });
+}
+
+// Validate and sanitize questions array.
+export function validateAndSanitizeQuestions(questions: any): any[] {
+  if (!Array.isArray(questions)) {
+    throw new Error("Questions must be an array");
+  }
+
+  return questions.map((cat) => {
+    if (!cat || typeof cat !== "object") {
+      throw new Error("Each question category must be an object");
+    }
+
+    return {
+      ...cat,
+      category: sanitizeString(cat.category),
+      questions: Array.isArray(cat.questions)
+        ? cat.questions.map((q) => ({
+            ...q,
+            question: sanitizeString(q.question),
+            type: sanitizeString(q.type),
+            required: !!q.required,
+          }))
+        : [],
+    };
+  });
+}
+
+// Validate MongoDB ObjectId format.
+export function isValidObjectId(id: string): boolean {
+  return validator.isMongoId(id);
 }
