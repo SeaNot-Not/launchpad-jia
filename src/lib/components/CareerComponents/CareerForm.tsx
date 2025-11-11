@@ -63,8 +63,6 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<Step[]>([{ title: "Career Details" }, { title: "AI Interview Setup" }, { title: "Review Career" }]);
 
-  console.log(career);
-
   // Variables in question list in career review
   let questionNumber = 1;
 
@@ -159,9 +157,9 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
   const [savedCareerId, setSavedCareerId] = useState<string | null>(null);
 
   const updateCareer = async (status: string, isSegmentSave: boolean = false) => {
-    // Use segmented values for validation
-    if (Number(segmentOneValues.minimumSalary) && Number(segmentOneValues.maximumSalary) && Number(segmentOneValues.minimumSalary) > Number(segmentOneValues.maximumSalary)) {
-      errorToast("Minimum salary cannot be greater than maximum salary", 1300);
+    setShowSaveModal("");
+
+    if (!status) {
       return;
     }
 
@@ -235,22 +233,13 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
   };
 
   const confirmSaveCareer = (status: string) => {
-    if (Number(segmentOneValues.minimumSalary) && Number(segmentOneValues.maximumSalary) && Number(segmentOneValues.minimumSalary) > Number(segmentOneValues.maximumSalary)) {
-      errorToast("Minimum salary cannot be greater than maximum salary", 1300);
-      return;
-    }
-
     setShowSaveModal(status);
   };
 
   const saveCareer = async (status: string, isSegmentSave: boolean = false) => {
     setShowSaveModal("");
-    if (!status) {
-      return;
-    }
 
-    // Validate current step before saving
-    if (!validateCurrentStep()) {
+    if (!status) {
       return;
     }
 
@@ -330,19 +319,36 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
       case 0:
         const isSegmentOneValid = validateSegmentOne({
           jobTitle: { required: true, message: "Job title is required" },
-          employmentType: { required: true, message: "Employment type is required" },
-          workSetup: { required: true, message: "Work arrangement is required" },
+          employmentType: {
+            required: true,
+            message: "Employment type is required",
+          },
+          workSetup: {
+            required: true,
+            message: "Work arrangement is required",
+          },
           country: { required: true, message: "Country is required" },
           province: { required: true, message: "Province is required" },
           city: { required: true, message: "City is required" },
           salaryNegotiable: { required: false },
-          minimumSalary: { required: true, message: "Minimum salary is required" },
-          maximumSalary: { required: true, message: "Maximum salary is required" },
+          minimumSalary: {
+            required: true,
+            message: "Minimum salary is required",
+          },
+          maximumSalary: {
+            required: true,
+            message: "Maximum salary is required",
+          },
           description: { required: true, message: "Description is required" },
         });
 
         if (!isSegmentOneValid) {
-          errorToast("Please fill out all required fields", 1300);
+          const errMessage =
+            segmentOneErrors?.minimumSalary === "Minimum salary cannot be greater than maximum salary" && segmentOneErrors?.maximumSalary === "Minimum salary cannot be greater than maximum salary"
+              ? "Minimum salary cannot be greater than maximum salary"
+              : "Please fill out all required fields";
+
+          errorToast(errMessage, 1300);
           return false;
         }
         return true;
@@ -412,8 +418,10 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
             variant="secondary"
             disabled={isSavingCareer}
             onClick={() => {
-              // For add flow, we show modal confirmation
-              confirmSaveCareer("inactive");
+              if (validateCurrentStep()) {
+                // For add flow, we show modal confirmation
+                confirmSaveCareer("inactive");
+              }
             }}
             customStyle={{ marginRight: 8 }}
           >
@@ -447,7 +455,9 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               variant="primary"
               disabled={isSavingCareer}
               onClick={() => {
-                confirmSaveCareer("active");
+                if (validateCurrentStep()) {
+                  confirmSaveCareer("active");
+                }
               }}
               icon={<i className="la la-check-circle" style={{ color: "#fff", fontSize: 24 }} />}
             >
@@ -471,7 +481,10 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
             variant="secondary"
             disabled={isSavingCareer}
             onClick={() => {
-              updateCareer("inactive");
+              if (validateCurrentStep()) {
+                // For edit flow, we show modal confirmation
+                confirmSaveCareer("inactive");
+              }
             }}
             customStyle={{ marginRight: 8 }}
           >
@@ -501,7 +514,9 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               variant="primary"
               disabled={isSavingCareer}
               onClick={() => {
-                updateCareer("active");
+                if (validateCurrentStep()) {
+                  confirmSaveCareer("active");
+                }
               }}
               icon={<i className="la la-check-circle" style={{ color: "#fff", fontSize: 20, marginRight: 8 }} />}
             >
@@ -532,15 +547,35 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                     className="form-control"
                     placeholder="Enter job title"
                     onChange={(e) => handleSegmentOneChange("jobTitle", e.target.value)}
-                    style={{ boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)", outline: segmentOneErrors.jobTitle ? "2px solid #FDA29B" : "none" }}
+                    style={{
+                      boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                      outline: segmentOneErrors.jobTitle ? "2px solid #FDA29B" : "none",
+                    }}
                   />
-                  {segmentOneErrors.jobTitle && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.jobTitle}</p>}
+                  {segmentOneErrors.jobTitle && (
+                    <p
+                      style={{
+                        color: "red",
+                        fontWeight: 400,
+                        margin: 0,
+                        marginTop: "5px",
+                      }}
+                    >
+                      {segmentOneErrors.jobTitle}
+                    </p>
+                  )}
                 </FormField>
               </FormSection>
 
               {/* Work Setting Section */}
               <FormSection title="Work Setting">
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "20px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2,1fr)",
+                    gap: "20px",
+                  }}
+                >
                   <FormField label="Employment Type" isError={!!segmentOneErrors.employmentType}>
                     <CustomDropdown
                       onSelectSetting={(val) => handleSegmentOneChange("employmentType", val)}
@@ -549,7 +584,18 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                       placeholder="Select Employment Type"
                       isError={!!segmentOneErrors.employmentType}
                     />
-                    {segmentOneErrors.employmentType && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.employmentType}</p>}
+                    {segmentOneErrors.employmentType && (
+                      <p
+                        style={{
+                          color: "red",
+                          fontWeight: 400,
+                          margin: 0,
+                          marginTop: "5px",
+                        }}
+                      >
+                        {segmentOneErrors.employmentType}
+                      </p>
+                    )}
                   </FormField>
 
                   <FormField label="Arrangement" isError={!!segmentOneErrors.workSetup}>
@@ -560,14 +606,31 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                       placeholder="Choose Work Arrangement"
                       isError={!!segmentOneErrors.workSetup}
                     />
-                    {segmentOneErrors.workSetup && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.workSetup}</p>}
+                    {segmentOneErrors.workSetup && (
+                      <p
+                        style={{
+                          color: "red",
+                          fontWeight: 400,
+                          margin: 0,
+                          marginTop: "5px",
+                        }}
+                      >
+                        {segmentOneErrors.workSetup}
+                      </p>
+                    )}
                   </FormField>
                 </div>
               </FormSection>
 
               {/* Location Section */}
               <FormSection title="Location">
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "20px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3,1fr)",
+                    gap: "20px",
+                  }}
+                >
                   <FormField label="Country" isError={!!segmentOneErrors.country}>
                     <CustomDropdown
                       onSelectSetting={(setting) => handleSegmentOneChange("country", setting)}
@@ -576,7 +639,18 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                       placeholder="Select Country"
                       isError={!!segmentOneErrors.country}
                     />
-                    {segmentOneErrors.country && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.country}</p>}
+                    {segmentOneErrors.country && (
+                      <p
+                        style={{
+                          color: "red",
+                          fontWeight: 400,
+                          margin: 0,
+                          marginTop: "5px",
+                        }}
+                      >
+                        {segmentOneErrors.country}
+                      </p>
+                    )}
                   </FormField>
 
                   <FormField label="State / Province" isError={!!segmentOneErrors.province}>
@@ -593,7 +667,18 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                       placeholder="Select State / Province"
                       isError={!!segmentOneErrors.province}
                     />
-                    {segmentOneErrors.province && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.province}</p>}
+                    {segmentOneErrors.province && (
+                      <p
+                        style={{
+                          color: "red",
+                          fontWeight: 400,
+                          margin: 0,
+                          marginTop: "5px",
+                        }}
+                      >
+                        {segmentOneErrors.province}
+                      </p>
+                    )}
                   </FormField>
 
                   <FormField label="City" isError={!!segmentOneErrors.city}>
@@ -606,14 +691,31 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                       placeholder="Select City"
                       isError={!!segmentOneErrors.city}
                     />
-                    {segmentOneErrors.city && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.city}</p>}
+                    {segmentOneErrors.city && (
+                      <p
+                        style={{
+                          color: "red",
+                          fontWeight: 400,
+                          margin: 0,
+                          marginTop: "5px",
+                        }}
+                      >
+                        {segmentOneErrors.city}
+                      </p>
+                    )}
                   </FormField>
                 </div>
               </FormSection>
 
               {/* Salary Section */}
               <FormSection>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "10px",
+                  }}
+                >
                   <span style={{ fontSize: 16, color: "#181D27", fontWeight: 700 }}>Salary</span>
                   <FormToggle
                     checked={segmentOneValues.salaryNegotiable}
@@ -622,15 +724,43 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "20px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2,1fr)",
+                    gap: "20px",
+                  }}
+                >
                   <FormField label="Minimum Salary" isError={!!segmentOneErrors.minimumSalary}>
                     <CurrencyInput value={segmentOneValues.minimumSalary} onChange={(val) => handleSegmentOneChange("minimumSalary", val)} placeholder="0" isError={!!segmentOneErrors.minimumSalary} />
-                    {segmentOneErrors.minimumSalary && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.minimumSalary}</p>}
+                    {segmentOneErrors.minimumSalary && (
+                      <p
+                        style={{
+                          color: "red",
+                          fontWeight: 400,
+                          margin: 0,
+                          marginTop: "5px",
+                        }}
+                      >
+                        {segmentOneErrors.minimumSalary}
+                      </p>
+                    )}
                   </FormField>
 
                   <FormField label="Maximum Salary" isError={!!segmentOneErrors.maximumSalary}>
                     <CurrencyInput value={segmentOneValues.maximumSalary} onChange={(val) => handleSegmentOneChange("maximumSalary", val)} placeholder="0" isError={!!segmentOneErrors.maximumSalary} />
-                    {segmentOneErrors.maximumSalary && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.maximumSalary}</p>}
+                    {segmentOneErrors.maximumSalary && (
+                      <p
+                        style={{
+                          color: "red",
+                          fontWeight: 400,
+                          margin: 0,
+                          marginTop: "5px",
+                        }}
+                      >
+                        {segmentOneErrors.maximumSalary}
+                      </p>
+                    )}
                   </FormField>
                 </div>
               </FormSection>
@@ -639,7 +769,18 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
             <CareerFormSubSectionContainer number={2} title={"Job Description"}>
               <div>
                 <RichTextEditor setText={(text) => handleSegmentOneChange("description", text)} text={segmentOneValues.description} isError={!!segmentOneErrors.description} />
-                {segmentOneErrors.description && <p style={{ color: "red", fontWeight: 400, margin: 0, marginTop: "5px" }}>{segmentOneErrors.description}</p>}
+                {segmentOneErrors.description && (
+                  <p
+                    style={{
+                      color: "red",
+                      fontWeight: 400,
+                      margin: 0,
+                      marginTop: "5px",
+                    }}
+                  >
+                    {segmentOneErrors.description}
+                  </p>
+                )}
               </div>
             </CareerFormSubSectionContainer>
             {/* JOB DESCRIPTION */}
@@ -649,7 +790,10 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
           <CareerFormSectionContainer style={{ width: "25%" }}>
             <CareerFormTipsContainer
               tips={[
-                { highlightedText: "Use clear, standard job titles", text: 'for better searchability (e.g., "Software Engineer" instead of "Code Ninja" or "Tech Rockstar").' },
+                {
+                  highlightedText: "Use clear, standard job titles",
+                  text: 'for better searchability (e.g., "Software Engineer" instead of "Code Ninja" or "Tech Rockstar").',
+                },
                 {
                   highlightedText: "Avoid abbreviations",
                   text: 'or internal role codes that applicants may not understand (e.g., use "QA Engineer" instead of "QE II" or "QA-TL").',
@@ -734,7 +878,13 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
       )}
 
       {currentStep === 2 && (
-        <CareerFormMainContainer style={{ flexDirection: "column", maxWidth: "1246px", paddingBottom: "32px" }}>
+        <CareerFormMainContainer
+          style={{
+            flexDirection: "column",
+            maxWidth: "1246px",
+            paddingBottom: "32px",
+          }}
+        >
           <CareerCollapseableContainer containerTitle="Career Details" onEditClick={() => setCurrentStep(0)}>
             {/* Job Title */}
             <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -742,7 +892,13 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               <span style={{ color: "#414651", fontWeight: 500 }}>{segmentOneValues.jobTitle}</span>
             </div>
 
-            <div style={{ width: "100%", border: "1px solid #E9EAEB", margin: "10px 0" }} />
+            <div
+              style={{
+                width: "100%",
+                border: "1px solid #E9EAEB",
+                margin: "10px 0",
+              }}
+            />
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)" }}>
               {/* Employment Type */}
@@ -758,7 +914,13 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               </div>
             </div>
 
-            <div style={{ width: "100%", border: "1px solid #E9EAEB", margin: "10px 0" }} />
+            <div
+              style={{
+                width: "100%",
+                border: "1px solid #E9EAEB",
+                margin: "10px 0",
+              }}
+            />
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)" }}>
               {/* Country */}
@@ -780,7 +942,13 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               </div>
             </div>
 
-            <div style={{ width: "100%", border: "1px solid #E9EAEB", margin: "10px 0" }} />
+            <div
+              style={{
+                width: "100%",
+                border: "1px solid #E9EAEB",
+                margin: "10px 0",
+              }}
+            />
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)" }}>
               {/* Minimum Salary */}
@@ -796,7 +964,13 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               </div>
             </div>
 
-            <div style={{ width: "100%", border: "1px solid #E9EAEB", margin: "10px 0" }} />
+            <div
+              style={{
+                width: "100%",
+                border: "1px solid #E9EAEB",
+                margin: "10px 0",
+              }}
+            />
 
             {/* Description */}
             <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -805,7 +979,9 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                 style={{
                   color: "#414651",
                 }}
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(segmentOneValues.description) }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(segmentOneValues.description),
+                }}
               />
             </div>
           </CareerCollapseableContainer>
@@ -820,7 +996,15 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                   Automatically endorse candidates who are{" "}
                   <span
                     className="badge"
-                    style={{ fontSize: 14, border: "1px solid #B2DDFF", color: "#175CD3", backgroundColor: "#EFF8FF", borderRadius: "25px", padding: "5px 10px", textTransform: "capitalize" }}
+                    style={{
+                      fontSize: 14,
+                      border: "1px solid #B2DDFF",
+                      color: "#175CD3",
+                      backgroundColor: "#EFF8FF",
+                      borderRadius: "25px",
+                      padding: "5px 10px",
+                      textTransform: "capitalize",
+                    }}
                   >
                     Good Fit
                   </span>{" "}
@@ -831,7 +1015,15 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                   Automatically endorse candidates who are{" "}
                   <span
                     className="badge"
-                    style={{ fontSize: 14, border: "1px solid #A6F4C5", color: "#027948", backgroundColor: "#ECFDF3", borderRadius: "25px", padding: "5px 10px", textTransform: "capitalize" }}
+                    style={{
+                      fontSize: 14,
+                      border: "1px solid #A6F4C5",
+                      color: "#027948",
+                      backgroundColor: "#ECFDF3",
+                      borderRadius: "25px",
+                      padding: "5px 10px",
+                      textTransform: "capitalize",
+                    }}
                   >
                     Strong Fit
                   </span>{" "}
@@ -842,12 +1034,32 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               )}
             </div>
 
-            <div style={{ width: "100%", border: "1px solid #E9EAEB", margin: "10px 0" }} />
+            <div
+              style={{
+                width: "100%",
+                border: "1px solid #E9EAEB",
+                margin: "10px 0",
+              }}
+            />
 
             {/* Require Video on Interview */}
-            <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <span style={{ fontSize: 16, color: "#181D27", fontWeight: 700 }}>Require Video on Interview</span>
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
                 <span style={{ color: "#414651", fontWeight: 500 }}>{segmentTwoValues.requireVideo ? "Yes" : "No"}</span>
                 <i
                   className={segmentTwoValues.requireVideo ? "la la-check" : "la la-times"}
@@ -863,11 +1075,24 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
               </div>
             </div>
 
-            <div style={{ width: "100%", border: "1px solid #E9EAEB", margin: "10px 0" }} />
+            <div
+              style={{
+                width: "100%",
+                border: "1px solid #E9EAEB",
+                margin: "10px 0",
+              }}
+            />
 
             {/* Interview Questions */}
             <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
                 <span style={{ fontSize: 16, color: "#181D27", fontWeight: 700 }}>Interview Questions</span>
 
                 <div
@@ -891,12 +1116,37 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
 
               {segmentTwoValues.questions.map((category) => (
                 <div key={category.id}>
-                  <span style={{ fontSize: 16, color: "#414651", fontWeight: 700, marginBottom: 5 }}>{category.category}</span>
-                  <ol style={{ listStyleType: "none", paddingLeft: 16, margin: "5px 0", display: "flex", flexDirection: "column", gap: "5px" }}>
+                  <span
+                    style={{
+                      fontSize: 16,
+                      color: "#414651",
+                      fontWeight: 700,
+                      marginBottom: 5,
+                    }}
+                  >
+                    {category.category}
+                  </span>
+                  <ol
+                    style={{
+                      listStyleType: "none",
+                      paddingLeft: 16,
+                      margin: "5px 0",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "5px",
+                    }}
+                  >
                     {category.questions.map((q) => {
                       const currentNumber = questionNumber++;
                       return (
-                        <li key={q.id} style={{ fontSize: 16, color: "#414651", fontWeight: 500 }}>
+                        <li
+                          key={q.id}
+                          style={{
+                            fontSize: 16,
+                            color: "#414651",
+                            fontWeight: 500,
+                          }}
+                        >
                           {currentNumber}. {q.question}
                         </li>
                       );
@@ -984,7 +1234,15 @@ const StepSegment: React.FC<{
       }}
     >
       {/* ICON AND PROGRESS BAR */}
-      <div style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
         {/* ICON */}
         <i className={getIconClass()} style={{ color: getIconColor(), fontSize: 28 }} />
 
@@ -1017,7 +1275,16 @@ const StepSegment: React.FC<{
           padding: "0 5px",
         }}
       >
-        <span style={{ fontSize: 16, color: getLabelColor(), fontWeight: 700, whiteSpace: "nowrap" }}>{title}</span>
+        <span
+          style={{
+            fontSize: 16,
+            color: getLabelColor(),
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {title}
+        </span>
       </div>
     </div>
   );
@@ -1050,7 +1317,11 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep }) => {
   );
 };
 
-const CareerFormHeader: React.FC<{ title: string; children: React.ReactNode; isCareerInactive?: boolean }> = ({ title, children, isCareerInactive }) => {
+const CareerFormHeader: React.FC<{
+  title: string;
+  children: React.ReactNode;
+  isCareerInactive?: boolean;
+}> = ({ title, children, isCareerInactive }) => {
   return (
     <div
       style={{
@@ -1080,7 +1351,10 @@ const CareerFormHeader: React.FC<{ title: string; children: React.ReactNode; isC
   );
 };
 
-const CareerFormMainContainer: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => {
+const CareerFormMainContainer: React.FC<{
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}> = ({ children, style }) => {
   return (
     <div
       style={cs(
@@ -1102,7 +1376,10 @@ const CareerFormMainContainer: React.FC<{ children: React.ReactNode; style?: Rea
   );
 };
 
-const CareerFormSectionContainer: React.FC<{ style?: React.CSSProperties; children: React.ReactNode }> = ({ style, children }) => {
+const CareerFormSectionContainer: React.FC<{
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}> = ({ style, children }) => {
   return (
     <div
       style={cs(
@@ -1120,7 +1397,12 @@ const CareerFormSectionContainer: React.FC<{ style?: React.CSSProperties; childr
   );
 };
 
-const CareerFormSubSectionContainer: React.FC<{ children: React.ReactNode; number?: number; title: string; iconComponent?: React.ReactNode }> = ({ children, number, title, iconComponent }) => {
+const CareerFormSubSectionContainer: React.FC<{
+  children: React.ReactNode;
+  number?: number;
+  title: string;
+  iconComponent?: React.ReactNode;
+}> = ({ children, number, title, iconComponent }) => {
   return (
     <div className="layered-card-middle">
       <div
@@ -1131,7 +1413,17 @@ const CareerFormSubSectionContainer: React.FC<{ children: React.ReactNode; numbe
           padding: "5px 16px",
         }}
       >
-        <span style={{ fontSize: 18, color: "#181D27", fontWeight: 700, display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+        <span
+          style={{
+            fontSize: 18,
+            color: "#181D27",
+            fontWeight: 700,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
           {iconComponent && iconComponent}
           {number ? `${number}. ` : ""}
           {title}
@@ -1145,7 +1437,9 @@ const CareerFormSubSectionContainer: React.FC<{ children: React.ReactNode; numbe
   );
 };
 
-const CareerFormTipsContainer: React.FC<{ tips: { highlightedText?: string; text: string }[] }> = ({ tips }) => {
+const CareerFormTipsContainer: React.FC<{
+  tips: { highlightedText?: string; text: string }[];
+}> = ({ tips }) => {
   return (
     <div className="layered-card-middle">
       <div
@@ -1156,7 +1450,17 @@ const CareerFormTipsContainer: React.FC<{ tips: { highlightedText?: string; text
           padding: "5px 16px",
         }}
       >
-        <span style={{ fontSize: 18, color: "#181D27", fontWeight: 700, display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+        <span
+          style={{
+            fontSize: 18,
+            color: "#181D27",
+            fontWeight: 700,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
           <img src={assetConstants.hilightV2} style={{ width: 23, height: 23 }} />
           Tips
         </span>
@@ -1301,7 +1605,11 @@ const FormSection: React.FC<{ title?: string; children: React.ReactNode }> = ({ 
   </div>
 );
 
-const FormField: React.FC<{ label: string; isError?: boolean; children: React.ReactNode }> = ({ label, isError, children }) => (
+const FormField: React.FC<{
+  label: string;
+  isError?: boolean;
+  children: React.ReactNode;
+}> = ({ label, isError, children }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
     <span style={{ color: isError ? "#F04438" : "#414651", fontWeight: 500 }}>{label}</span>
     {children}
@@ -1309,7 +1617,15 @@ const FormField: React.FC<{ label: string; isError?: boolean; children: React.Re
 );
 
 const FormToggle = ({ checked, onChange, label }) => (
-  <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: 8, minWidth: "130px" }}>
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
+      minWidth: "130px",
+    }}
+  >
     <label className="switch">
       <input type="checkbox" checked={checked} onChange={onChange} />
       <span className="slider round" />
@@ -1318,19 +1634,53 @@ const FormToggle = ({ checked, onChange, label }) => (
   </div>
 );
 
-const CurrencyInput: React.FC<{ value: string; onChange: (value: string) => void; placeholder?: string; isError?: boolean }> = ({ value, onChange, placeholder, isError }) => (
+const CurrencyInput: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  isError?: boolean;
+}> = ({ value, onChange, placeholder, isError }) => (
   <div style={{ position: "relative" }}>
-    <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#6c757d", fontSize: "16px", pointerEvents: "none" }}>₱</span>
+    <span
+      style={{
+        position: "absolute",
+        left: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        color: "#6c757d",
+        fontSize: "16px",
+        pointerEvents: "none",
+      }}
+    >
+      ₱
+    </span>
     <input
       type="number"
       className="form-control"
-      style={{ paddingLeft: "28px", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)", outline: isError ? "2px solid #FDA29B" : "none" }}
+      style={{
+        paddingLeft: "28px",
+        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        outline: isError ? "2px solid #FDA29B" : "none",
+      }}
       placeholder={placeholder}
       min={0}
       value={value}
       onChange={(e) => onChange(e.target.value || "")}
     />
-    <span style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", color: "#6c757d", fontSize: "16px", pointerEvents: "none", left: "auto", right: "30px" }}>PHP</span>
+    <span
+      style={{
+        position: "absolute",
+        top: "50%",
+        transform: "translateY(-50%)",
+        color: "#6c757d",
+        fontSize: "16px",
+        pointerEvents: "none",
+        left: "auto",
+        right: "30px",
+      }}
+    >
+      PHP
+    </span>
   </div>
 );
 
@@ -1345,16 +1695,37 @@ function useCareerFormValidation<T extends Record<string, any>>(initialValues: T
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = useCallback((field: keyof T, value: any) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
+    // Update values and then update errors (handles realtime min/max checks)
+    setValues((prev) => {
+      const updated = { ...prev, [field]: value } as T;
 
-    // Clear error if fixed
-    setErrors((prev) => {
-      if (value && prev[field as string]) {
-        const updated = { ...prev };
-        delete updated[field as string];
-        return updated;
-      }
-      return prev;
+      setErrors((prevErr) => {
+        // Start from previous errors and remove field-specific error if value is provided
+        const nextErr = { ...prevErr } as Record<string, string>;
+        if (value && nextErr[field as string]) {
+          delete nextErr[field as string];
+        }
+
+        // Evaluate Min Salary and Max Salary Real Time
+        const minRaw = updated["minimumSalary"];
+        const maxRaw = updated["maximumSalary"];
+        const min = minRaw === null || minRaw === undefined || minRaw === "" ? NaN : Number(minRaw);
+        const max = maxRaw === null || maxRaw === undefined || maxRaw === "" ? NaN : Number(maxRaw);
+
+        if (!isNaN(min) && !isNaN(max) && min > max) {
+          const message = "Minimum salary cannot be greater than maximum salary";
+          nextErr["minimumSalary"] = message;
+          nextErr["maximumSalary"] = message;
+        } else {
+          // Clear any previous min/max errors when relationship is fixed
+          if (nextErr["minimumSalary"]) delete nextErr["minimumSalary"];
+          if (nextErr["maximumSalary"]) delete nextErr["maximumSalary"];
+        }
+
+        return nextErr;
+      });
+
+      return updated;
     });
   }, []);
 
@@ -1383,6 +1754,19 @@ function useCareerFormValidation<T extends Record<string, any>>(initialValues: T
           newErrors[field] = rule.message || `${field} is required`;
         }
       }
+
+      // Additional validation: minimumSalary should not be greater than maximumSalary
+      const minRaw = values["minimumSalary"];
+      const maxRaw = values["maximumSalary"];
+      const min = minRaw === null || minRaw === undefined || minRaw === "" ? NaN : Number(minRaw);
+      const max = maxRaw === null || maxRaw === undefined || maxRaw === "" ? NaN : Number(maxRaw);
+
+      if (!isNaN(min) && !isNaN(max) && min > max) {
+        const message = "Minimum salary cannot be greater than maximum salary";
+        newErrors["minimumSalary"] = message;
+        newErrors["maximumSalary"] = message;
+      }
+
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     },
