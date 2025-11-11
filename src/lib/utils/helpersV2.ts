@@ -69,7 +69,10 @@ export function processDisplayDate(date) {
 // Sanitize plain text (escapes HTML special characters).
 export function sanitizeString(value: string): string {
   if (typeof value !== "string") return "";
-  return validator.escape(value.trim());
+  return DOMPurify.sanitize(value.trim(), {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+  });
 }
 
 // Sanitize rich text (like descriptions) but allow safe HTML tags.
@@ -112,7 +115,6 @@ export function validateAndSanitizeQuestions(questions: any): any[] {
             ...q,
             question: sanitizeString(q.question),
             type: sanitizeString(q.type),
-            required: !!q.required,
           }))
         : [],
     };
