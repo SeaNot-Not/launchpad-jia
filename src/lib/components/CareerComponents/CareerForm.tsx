@@ -212,7 +212,23 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                 marginLeft: 8,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Career updated</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Career is saved {status === "active" ? "and published" : "as a draft"}</span>
+            </div>,
+            1300,
+            <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }} />
+          );
+        } else {
+          candidateActionToast(
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginLeft: 8,
+              }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Career is saved successfully.</span>
             </div>,
             1300,
             <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }} />
@@ -293,7 +309,7 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                 marginLeft: 8,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Career added {status === "active" ? "and published" : ""}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Career is saved {status === "inactive" && isSegmentSave ? "successfully" : "as a draft"}</span>
             </div>,
             1300,
             <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }} />
