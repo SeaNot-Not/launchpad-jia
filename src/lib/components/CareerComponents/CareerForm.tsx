@@ -63,6 +63,8 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<Step[]>([{ title: "Career Details" }, { title: "AI Interview Setup" }, { title: "Review Career" }]);
 
+  console.log(career);
+
   // Variables in question list in career review
   let questionNumber = 1;
 
@@ -398,7 +400,7 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
     <div className="col">
       {/* HEADER SECTION */}
       {formType === "add" ? (
-        <CareerFormHeader title="Add New Career">
+        <CareerFormHeader title={segmentOneValues.jobTitle || "Add New Career"}>
           {currentStep > 0 && (
             <CareerActionButton variant="secondary" onClick={() => setCurrentStep((prev) => prev - 1)}>
               Back
@@ -454,7 +456,7 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
           )}
         </CareerFormHeader>
       ) : (
-        <CareerFormHeader title="Edit Career Details">
+        <CareerFormHeader title={segmentOneValues.jobTitle || "Edit Career Details"} isCareerInactive={career?.status === "inactive"}>
           <CareerActionButton
             variant="secondary"
             onClick={() => {
@@ -1048,7 +1050,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep }) => {
   );
 };
 
-const CareerFormHeader: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
+const CareerFormHeader: React.FC<{ title: string; children: React.ReactNode; isCareerInactive?: boolean }> = ({ title, children, isCareerInactive }) => {
   return (
     <div
       style={{
@@ -1060,7 +1062,10 @@ const CareerFormHeader: React.FC<{ title: string; children: React.ReactNode }> =
         width: "100%",
       }}
     >
-      <h1 style={{ fontSize: "24px", fontWeight: 550, color: "#181D27" }}>{title}</h1>
+      <h1 style={{ fontSize: "24px", fontWeight: 550, color: "#181D27" }}>
+        {isCareerInactive && <span style={{ color: "#717680" }}>{"[Draft] "}</span>} {title}
+      </h1>
+
       <div
         style={{
           display: "flex",
