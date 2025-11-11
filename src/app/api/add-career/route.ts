@@ -4,12 +4,7 @@ import { guid } from "@/lib/Utils";
 import { ObjectId } from "mongodb";
 
 // Import Sanization Helper Functions
-import {
-  sanitizeString,
-  sanitizeRichText,
-  validateAndSanitizeQuestions,
-  isValidObjectId,
-} from "@/lib/utils/helpersV2";
+import { sanitizeString, sanitizeRichText, validateAndSanitizeQuestions, isValidObjectId } from "@/lib/utils/helpersV2";
 
 export async function POST(request: Request) {
   try {
@@ -26,7 +21,7 @@ export async function POST(request: Request) {
       requireVideo,
       location,
       workSetup,
-      workSetupRemarks,
+      // workSetupRemarks,
       status,
       salaryNegotiable,
       minimumSalary,
@@ -40,8 +35,7 @@ export async function POST(request: Request) {
     if (!jobTitle || !description || !questions || !location || !workSetup) {
       return NextResponse.json(
         {
-          error:
-            "Job title, description, questions, location and work setup are required",
+          error: "Job title, description, questions, location and work setup are required",
         },
         { status: 400 }
       );
@@ -49,10 +43,7 @@ export async function POST(request: Request) {
 
     // Validate ObjectId
     if (!isValidObjectId(orgID)) {
-      return NextResponse.json(
-        { error: "Invalid organization id." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid organization id." }, { status: 400 });
     }
 
     // Sanitize and validate fields
@@ -61,7 +52,7 @@ export async function POST(request: Request) {
     questions = validateAndSanitizeQuestions(questions);
     location = sanitizeString(location);
     workSetup = sanitizeString(workSetup);
-    workSetupRemarks = sanitizeString(workSetupRemarks || "");
+    // workSetupRemarks = sanitizeString(workSetupRemarks);
     country = sanitizeString(country || "");
     province = sanitizeString(province || "");
     employmentType = sanitizeString(employmentType || "");
@@ -70,10 +61,7 @@ export async function POST(request: Request) {
 
     // Validate minimum and maximum salary
     if (minimumSalary && maximumSalary && minimumSalary > maximumSalary) {
-      return NextResponse.json(
-        { error: "Minimum salary cannot be greater than maximum salary." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Minimum salary cannot be greater than maximum salary." }, { status: 400 });
     }
 
     // Connect to DB
@@ -114,24 +102,13 @@ export async function POST(request: Request) {
       .toArray();
 
     if (!orgDetails || orgDetails.length === 0) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    const totalActiveCareers = await db
-      .collection("careers")
-      .countDocuments({ orgID, status: "active" });
+    const totalActiveCareers = await db.collection("careers").countDocuments({ orgID, status: "active" });
 
-    if (
-      totalActiveCareers >=
-      orgDetails[0].plan.jobLimit + (orgDetails[0].extraJobSlots || 0)
-    ) {
-      return NextResponse.json(
-        { error: "You have reached the maximum number of jobs for your plan" },
-        { status: 400 }
-      );
+    if (totalActiveCareers >= orgDetails[0].plan.jobLimit + (orgDetails[0].extraJobSlots || 0)) {
+      return NextResponse.json({ error: "You have reached the maximum number of jobs for your plan" }, { status: 400 });
     }
 
     // Create career document
@@ -142,7 +119,7 @@ export async function POST(request: Request) {
       questions,
       location,
       workSetup,
-      workSetupRemarks,
+      // workSetupRemarks,
       createdAt: new Date(),
       updatedAt: new Date(),
       lastEditedBy,
@@ -168,9 +145,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error adding career:", error);
-    return NextResponse.json(
-      { error: "Failed to add career" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to add career" }, { status: 500 });
   }
 }

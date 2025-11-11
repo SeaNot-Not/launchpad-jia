@@ -13,11 +13,9 @@
 }
 
 .sidebar-main {
-  background: linear-gradient(to bottom, #fff, #ffffff, #b79fcfca),
-    url(https://images.pexels.com/photos/804269/pexels-photo-804269.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2);
+  background: linear-gradient(to bottom, #fff, #ffffff, #b79fcfca), url(https://images.pexels.com/photos/804269/pexels-photo-804269.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2);
 
-  box-shadow: rgba(0, 0, 0, 0.869) 0px 10px 36px 0px,
-    rgba(0, 0, 0, 0.909) 0px 0px 0px 1px !important;
+  box-shadow: rgba(0, 0, 0, 0.869) 0px 10px 36px 0px, rgba(0, 0, 0, 0.909) 0px 0px 0px 1px !important;
   border-right: 1px solid #ddd !important;
   z-index: 2000 !important;
   background: #fff !important;
@@ -91,8 +89,7 @@
 }
 
 .gradient-1 {
-  background: linear-gradient(to bottom, #4f04b9f0, #b79fcf76),
-    url(https://images.pexels.com/photos/804269/pexels-photo-804269.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2);
+  background: linear-gradient(to bottom, #4f04b9f0, #b79fcf76), url(https://images.pexels.com/photos/804269/pexels-photo-804269.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2);
   background-size: cover;
 }
 
@@ -209,7 +206,7 @@ td {
 }
 
 .form-control {
-  border: 2px solid #9c99a4 !important;
+  border: 1px solid #e9eaeb !important;
   border-radius: 5px !important;
   color: #333 !important;
   font-size: 1rem !important;
@@ -456,8 +453,7 @@ textarea {
     width: 100%;
     padding: 10px 20px;
 
-    background: linear-gradient(to left, #fff, #ece3f58d),
-      url(https://images.pexels.com/photos/7130498/pexels-photo-7130498.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1);
+    background: linear-gradient(to left, #fff, #ece3f58d), url(https://images.pexels.com/photos/7130498/pexels-photo-7130498.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1);
     background-size: cover;
     border-left: 4px solid royalblue;
 
@@ -578,8 +574,7 @@ tr {
 .org-dropdown-anim {
   opacity: 0;
   transform: translateY(-10px);
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .org-dropdown-anim.show {
   opacity: 1;
@@ -805,7 +800,7 @@ th[scope="col"] {
   justify-content: space-between;
   gap: 10px;
   background: #fff;
-  border: 1px solid #ddd;
+  border: 1px solid #e9eaeb;
   padding: 10px 20px;
   border-radius: 8px;
   transition: 0.3s;
@@ -2078,13 +2073,7 @@ $gifURL: "/gr-1.gif";
 .layered-card-outer {
   margin-top: 16px;
   width: 100%;
-  background: linear-gradient(
-    90deg,
-    #9fcaed 0%,
-    #ceb6da 33%,
-    #ebacc9 66%,
-    #fccec0 100%
-  );
+  background: linear-gradient(90deg, #9fcaed 0%, #ceb6da 33%, #ebacc9 66%, #fccec0 100%);
   border-radius: 20px;
   padding-top: 10px;
 }
@@ -2150,18 +2139,11 @@ $gifURL: "/gr-1.gif";
 }
 
 input:checked + .slider {
-  background: linear-gradient(
-    90deg,
-    #fccec0 0%,
-    #ebacc9 33%,
-    #ceb6da 66%,
-    #9fcaed 100%
-  );
+  background: linear-gradient(90deg, #fccec0 0%, #ebacc9 33%, #ceb6da 66%, #9fcaed 100%);
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px
-    linear-gradient(90deg, #fccec0 0%, #ebacc9 33%, #ceb6da 66%, #9fcaed 100%);
+  box-shadow: 0 0 1px linear-gradient(90deg, #fccec0 0%, #ebacc9 33%, #ceb6da 66%, #9fcaed 100%);
 }
 
 input:checked + .slider:before {
@@ -2353,13 +2335,7 @@ input:checked + .slider:before {
       &.active {
         color: #252b37;
         border-bottom: 2px solid transparent;
-        background-image: linear-gradient(
-          90deg,
-          #9fcaed 0%,
-          #ceb6da 33%,
-          #ebacc9 66%,
-          #fccec0 100%
-        );
+        background-image: linear-gradient(90deg, #9fcaed 0%, #ceb6da 33%, #ebacc9 66%, #fccec0 100%);
         background-repeat: no-repeat;
         background-position: bottom left;
         background-size: 100% 2px;
@@ -2372,13 +2348,7 @@ input:checked + .slider:before {
 .jia-gradient-text {
   font-size: 2rem;
   font-weight: bold;
-  background: linear-gradient(
-    90deg,
-    #9fcaed 0%,
-    #ceb6da 33%,
-    #ebacc9 66%,
-    #fccec0 100%
-  );
+  background: linear-gradient(90deg, #9fcaed 0%, #ceb6da 33%, #ebacc9 66%, #fccec0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
