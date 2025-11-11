@@ -11,7 +11,6 @@ import axios from "axios";
 import CareerActionModal from "./CareerActionModal";
 import FullScreenLoadingAnimation from "./FullScreenLoadingAnimation";
 import { assetConstants } from "@/lib/utils/constantsV2";
-import DOMPurify from "isomorphic-dompurify";
 
 // Helpers
 function cs(...styles: (React.CSSProperties | undefined | false)[]): React.CSSProperties {
@@ -202,21 +201,24 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
       setIsSavingCareer(true);
       const response = await axios.post("/api/update-career", updatedCareer);
       if (response.status === 200) {
-        candidateActionToast(
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              marginLeft: 8,
-            }}
-          >
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Career updated</span>
-          </div>,
-          1300,
-          <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }} />
-        );
+        if (!isSegmentSave) {
+          candidateActionToast(
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginLeft: 8,
+              }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Career updated</span>
+            </div>,
+            1300,
+            <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }} />
+          );
+        }
+
         // Only redirect if this is not a segment save
         if (!isSegmentSave) {
           setTimeout(() => {
@@ -980,7 +982,7 @@ export default function CareerForm({ career, formType, setShowEditModal }: { car
                   color: "#414651",
                 }}
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(segmentOneValues.description),
+                  __html: segmentOneValues.description,
                 }}
               />
             </div>

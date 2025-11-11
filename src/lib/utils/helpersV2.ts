@@ -1,5 +1,4 @@
 import moment from "moment";
-import DOMPurify from "isomorphic-dompurify";
 import validator from "validator";
 
 export function checkFile(file) {
@@ -13,14 +12,7 @@ export function checkFile(file) {
     return false;
   }
 
-  if (
-    ![
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "text/plain",
-    ].includes(file[0].type)
-  ) {
+  if (!["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"].includes(file[0].type)) {
     alert("Only PDF, DOC, DOCX, or TXT files are allowed.");
     return false;
   }
@@ -63,40 +55,44 @@ export function processDisplayDate(date) {
 }
 
 /**
- * Sanitization & Validation Helpers
+ * Simple Sanitization & Validation Helpers
  */
 
-// Sanitize plain text (escapes HTML special characters).
+// Simple HTML character escape
 export function sanitizeString(value: string): string {
   if (typeof value !== "string") return "";
-  return DOMPurify.sanitize(value.trim(), {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-  });
+  return value.trim().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// Sanitize rich text (like descriptions) but allow safe HTML tags.
+// Allow limited safe HTML tags and inline styles
 export function sanitizeRichText(html: string): string {
   if (typeof html !== "string") return "";
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
-      "b",
-      "i",
-      "em",
-      "strong",
-      "p",
-      "ul",
-      "ol",
-      "li",
-      "br",
-      "span",
-      "div",
-    ],
-    ALLOWED_ATTR: ["style"],
-  });
+
+  // Allow only these tags
+  const allowedTags = ["b", "i", "em", "strong", "p", "ul", "ol", "li", "br", "span", "div"];
+
+  // Strip out any tag not in the allowed list
+  return (
+    html
+      // Remove disallowed tags
+      .replace(/<(\/?)(\w+)([^>]*)>/gi, (match, slash, tagName, attrs) => {
+        tagName = tagName.toLowerCase();
+        if (!allowedTags.includes(tagName)) return ""; // remove tag entirely
+
+        // Only allow `style` attribute (and only inline)
+        const styleMatch = attrs.match(/style\s*=\s*"([^"]*)"/i);
+        const styleAttr = styleMatch ? ` style="${styleMatch[1]}"` : "";
+
+        return `<${slash}${tagName}${styleAttr}>`;
+      })
+      // Remove any remaining <script> or event attributes (for safety)
+      .replace(/on\w+="[^"]*"/gi, "")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .trim()
+  );
 }
 
-// Validate and sanitize questions array.
+// Validate and sanitize questions array
 export function validateAndSanitizeQuestions(questions: any): any[] {
   if (!Array.isArray(questions)) {
     throw new Error("Questions must be an array");
@@ -121,7 +117,7 @@ export function validateAndSanitizeQuestions(questions: any): any[] {
   });
 }
 
-// Validate MongoDB ObjectId format.
+// Validate MongoDB ObjectId
 export function isValidObjectId(id: string): boolean {
   return validator.isMongoId(id);
 }
